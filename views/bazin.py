@@ -33,12 +33,12 @@ with col1:
             ticker = ticker+".SA"
     except Exception:
         pass
-
-    try:
-        bazin = calculadora_bazin(ticker)
-        st.write(f"""Preço teto Bazin: **{round(bazin,2)}**""")
-    except Exception:
-        pass
+    if ticker:
+        try:
+            bazin = calculadora_bazin(ticker)
+            st.write(f"""Preço teto Bazin: **{round(bazin,2)}**""")
+        except Exception:
+            pass
 
 with col2:
     st.image("assets/premium advert.png")
