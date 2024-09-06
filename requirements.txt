@@ -1,0 +1,3 @@
+yfinance
+streamlit
+streamlit_shadcn_ui
