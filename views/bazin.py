@@ -1,45 +1,77 @@
 import yfinance as yf
 import streamlit as st
+import math
 import streamlit_shadcn_ui as ui
 
-
-def calculadora_bazin(ticker):
+def get_graham(ticker):
     try:
         stock = yf.Ticker(ticker)
-        history = stock.history(start='2019-01-01', end='2024-01-01')
-        dividends = history['Dividends'].sum()
-        bazin = (dividends/5)/0.06
-        return bazin
+        info = stock.info
+        price = stock.fast_info['last_price']
+        eps = info['trailingEps']
+        book = info['bookValue']
+        if eps > 0 and book > 0:
+            graham = math.sqrt(22.5*eps*book)
+        else:
+            graham = 0
+        return round(graham,2), round(price,2)
     except Exception:
         return 0
 
-st.title("Calculadora Bazin")
+st.title("Calculadora Graham")
+
+st.write("""**A calculadora Graham estima o valor intrínseco de uma empresa utilizando a fórmula de Graham,
+ que multiplica o Lucro por Ação (LPA) pelo Valor Patrimonial por Ação (VPA) e, em seguida, calcula a raiz quadrada do
+  produto dessa multiplicação com a constante de Graham, que é 22,5. O resultado fornece uma estimativa do valor justo
+   da empresa. No entanto, é fundamental utilizar esse método como parte de uma análise fundamentalista mais ampla, não
+    como a única base para decisões de investimento.**""")
+
 
 col1, col2 = st.columns(2, gap="medium", vertical_alignment="top")
 
 with col1:
-    st.title("")
-    st.write("""**A calculadora Bazin calcula o preço justo de uma ação somando os dividendos pagos nos últimos 5 anos
-     completos, excluindo o ano atual. Em seguida, divide essa soma por 5 para obter a média anual dos dividendos. O valor
-      resultante é então dividido por 6%, que é a taxa mínima de retorno recomendada por Bazin. É importante ressaltar que
-       esse método é uma ferramenta complementar e deve ser utilizado em conjunto com uma análise fundamentalista
-        abrangente, não sendo recomendado como única base para decisões de investimento.**""")
-    st.text("Selecione um país: ")
-    country_selection = ui.select("País", options=["BR", "US"])
+    st.text("Como usar:")
+    st.video("Como usar a Calculadora Graham.mp4")
+    st.text("Selecione um país:")
 
-    try:
-        ticker = st.text_input("Digite um ticker: ").upper()
-        if country_selection == "BR" and ticker:
-            ticker = ticker+".SA"
-    except Exception:
-        pass
+    country_selection = ui.select("Selecione um país: ", options=["BR", "US"], key=2)
+    st.text("")
+    st.text("")
+    ticker = st.text_input("Ticker: ").upper()
+
     if ticker:
+        if country_selection == "BR":
+            ticker = ticker + ".SA"
         try:
-            bazin = calculadora_bazin(ticker)
-            st.write(f"""Preço teto Bazin: **{round(bazin,2)}**""")
+            graham, price = get_graham(ticker)
+            desconto_graham = ((graham-price)/graham)*100
+
+            if country_selection == "BR":
+                st.write(f"""Preço atual: **R${price}**""")
+                st.write(f"""Preço Teto Graham: **R${graham}**""")
+                if desconto_graham > 0:
+                    st.write(f"""Essa ação está com desconto de **{round(desconto_graham,2)}%** segundo o método Graham.""")
+                elif graham == 0:
+                    st.write("""Não há preço teto Graham para essa ação.""")
+                elif desconto_graham < 0:
+                    st.write(f"""Essa ação está **{round((desconto_graham*(-1)),2)}%** acima do preço teto Graham.""")
+                elif desconto_graham == 0:
+                    st.write("""A cotação atual é igual ao preço teto.""")
+
+            elif country_selection == "US":
+                st.write(f"""Preço atual: **U${price}**""")
+                st.write(f"""Preço Teto Graham: **U${graham}**""")
+                if desconto_graham > 0:
+                    st.write(f"""Essa ação está com desconto de **{round(desconto_graham, 2)}%** segundo o método Graham.""")
+                elif graham == 0:
+                    st.write("""Não há preço teto Graham para essa ação.""")
+                elif desconto_graham < 0:
+                    st.write(f"""Essa ação está **{round((desconto_graham * (-1)), 2)}%** acima do preço teto Graham.""")
+                elif desconto_graham == 0:
+                    st.write("""A cotação atual é igual ao preço teto.""")
+
         except Exception:
-            pass
+            st.write("""Digite um ticker válido.""")
 
 with col2:
     st.image("assets/premium advert.png")
-    st.link_button("Premium", "https://smartstrategy.streamlit.app")
