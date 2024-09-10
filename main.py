@@ -12,7 +12,7 @@ st.image("assets/top banner.png")
 
 bazin_page = st.Page(
     page="views/bazin.py",
-    title="Calculadora Bazin",
+    title="Calculadora Graham",
     icon=":material/chevron_right:",
     default=True
 )
